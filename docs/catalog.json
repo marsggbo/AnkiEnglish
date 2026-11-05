@@ -13,6 +13,19 @@
       "source_url": "https://www.springfieldspringfield.co.uk/view_episode_scripts.php?tv-show=friends&episode=s01e01",
       "updated_at": "2026-11-05T01:21:26.742815+00:00",
       "url": "episodes/friends/S01E01/"
+    },
+    {
+      "show": "Friends",
+      "show_slug": "friends",
+      "season": 1,
+      "episode": 2,
+      "episode_code": "S01E02",
+      "card_count": 50,
+      "review_required_count": 0,
+      "source_name": "Springfield Springfield",
+      "source_url": "https://www.springfieldspringfield.co.uk/view_episode_scripts.php?tv-show=friends&episode=s01e02",
+      "updated_at": "2026-11-05T01:35:12.096498+00:00",
+      "url": "episodes/friends/S01E02/"
     }
   ]
 }

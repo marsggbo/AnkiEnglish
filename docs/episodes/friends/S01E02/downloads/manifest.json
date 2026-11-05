@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "built_at": "2026-11-05T01:14:00.331286+00:00",
+  "metadata": {
+    "show": "Friends",
+    "season": 1,
+    "episode": 2,
+    "source_name": "Springfield Springfield",
+    "source_url": "https://www.springfieldspringfield.co.uk/view_episode_scripts.php?tv-show=friends&episode=s01e02",
+    "source_confidence": "已核验",
+    "retrieved_at": "2026-11-04T00:00:00Z",
+    "native_language": "zh-CN",
+    "episode_code": "S01E02",
+    "show_slug": "friends"
+  },
+  "settings": {
+    "daily_new_limit": 10,
+    "desired_retention": 0.9,
+    "scheduler": "FSRS-7",
+    "ts_fsrs_version": "6.0.0"
+  },
+  "card_count": 50,
+  "review_required_count": 0,
+  "levels": {
+    "C1": 18,
+    "B2": 32
+  },
+  "categories": {
+    "idiom": 23,
+    "phrasal verb": 15,
+    "collocation": 8,
+    "word": 4
+  },
+  "warnings": []
+}
