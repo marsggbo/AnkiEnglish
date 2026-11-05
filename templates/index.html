@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>AnkiEnglish</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../../../">AnkiEnglish</a>
+    <div class="toolbar">
+      <a class="ghost" href="downloads/anki.csv" download>下载 Anki CSV</a>
+      <a class="ghost" href="downloads/cards.csv" download>下载完整 CSV</a>
+      <button id="notify-button" class="ghost" type="button">到期通知</button>
+      <button id="export-button" class="ghost" type="button">导出进度</button>
+      <label class="ghost file-button">导入进度<input id="import-input" type="file" accept="application/json"></label>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="deck-heading" aria-labelledby="deck-title">
+      <p id="eyebrow" class="eyebrow">剧集学习包</p>
+      <h1 id="deck-title">正在载入…</h1>
+      <div class="stats" aria-live="polite">
+        <span><strong id="due-count">0</strong> 今日待复习</span>
+        <span><strong id="learned-count">0</strong> 已开始</span>
+        <span id="scheduler-badge" class="badge">调度器加载中</span>
+      </div>
+    </section>
+
+    <section id="review-panel" class="review-panel" hidden>
+      <article class="review-card">
+        <div class="card-meta">
+          <span id="level" class="badge"></span>
+          <span id="category"></span>
+          <span id="review-status"></span>
+        </div>
+        <h2 id="term"></h2>
+        <p id="ipa" class="ipa"></p>
+        <blockquote id="scene-sentence"></blockquote>
+
+        <button id="reveal-button" class="primary reveal" type="button">显示答案</button>
+
+        <div id="answer" class="answer" hidden>
+          <p id="definition" class="definition"></p>
+          <p id="scene-translation" class="translation"></p>
+          <div class="example-box">
+            <span>日常替换例句</span>
+            <p id="everyday-example"></p>
+            <p id="everyday-translation" class="translation"></p>
+          </div>
+          <p id="notes" class="notes"></p>
+          <div class="ratings" aria-label="记忆评分">
+            <button type="button" data-grade="Again" class="again">忘记</button>
+            <button type="button" data-grade="Hard" class="hard">困难</button>
+            <button type="button" data-grade="Good" class="good">记得</button>
+            <button type="button" data-grade="Easy" class="easy">简单</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section id="empty-panel" class="empty-panel" hidden>
+      <p class="complete-mark">✓</p>
+      <h2>今天完成了</h2>
+      <p>当前没有到期卡片。下次打开页面时会重新计算复习队列。</p>
+    </section>
+
+    <footer class="source-footer">
+      <span id="source-name"></span>
+      <a id="source-link" target="_blank" rel="noreferrer noopener">查看字幕来源</a>
+      <span>复习进度只保存在当前浏览器</span>
+    </footer>
+  </main>
+
+  <noscript>此页面需要 JavaScript 才能运行复习系统。</noscript>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

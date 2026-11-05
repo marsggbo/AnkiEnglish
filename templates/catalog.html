@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>AnkiEnglish 学习库</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar"><span class="brand">AnkiEnglish</span></header>
+  <main class="layout">
+    <section class="deck-heading">
+      <p class="eyebrow">Your episode vocabulary library</p>
+      <h1>追剧，也记得住。</h1>
+      <p class="translation">每集约 50 个可迁移到日常表达的词和短语。打开剧集开始今日复习。</p>
+    </section>
+    <section id="catalog" class="catalog-grid" aria-live="polite"></section>
+    <section id="empty" class="empty-panel" hidden>
+      <h2>还没有学习包</h2>
+      <p>运行 AnkiEnglish 生成并发布第一集。</p>
+    </section>
+  </main>
+  <script type="module" src="catalog.js"></script>
+</body>
+</html>
