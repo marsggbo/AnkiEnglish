@@ -51,8 +51,8 @@ def episode_code(season: Any, episode: Any) -> str:
 
 def canonical(value: str) -> str:
     value = unicodedata.normalize("NFKC", value).casefold()
-    value = value.translate(str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"', "…": "..."}))
-    value = re.sub(r"[^\w']+", " ", value, flags=re.UNICODE)
+    value = value.translate(str.maketrans({"’": " ", "‘": " ", "'": " ", "“": " ", "”": " ", "…": "..."}))
+    value = re.sub(r"[^\w]+", " ", value, flags=re.UNICODE)
     return re.sub(r"\s+", " ", value).strip()
 
 
