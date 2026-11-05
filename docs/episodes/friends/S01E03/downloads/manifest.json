@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "built_at": "2026-11-05T01:14:00.757725+00:00",
+  "metadata": {
+    "show": "Friends",
+    "season": 1,
+    "episode": 3,
+    "source_name": "Springfield Springfield",
+    "source_url": "https://www.springfieldspringfield.co.uk/view_episode_scripts.php?tv-show=friends&episode=s01e03",
+    "source_confidence": "已核验",
+    "retrieved_at": "2026-11-04T00:00:00Z",
+    "native_language": "zh-CN",
+    "episode_code": "S01E03",
+    "show_slug": "friends"
+  },
+  "settings": {
+    "daily_new_limit": 10,
+    "desired_retention": 0.9,
+    "scheduler": "FSRS-7",
+    "ts_fsrs_version": "6.0.0"
+  },
+  "card_count": 50,
+  "review_required_count": 0,
+  "levels": {
+    "B2": 31,
+    "C1": 19
+  },
+  "categories": {
+    "sentence pattern": 6,
+    "word": 9,
+    "idiom": 17,
+    "phrasal verb": 13,
+    "collocation": 5
+  },
+  "warnings": []
+}
