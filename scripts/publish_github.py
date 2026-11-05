@@ -96,6 +96,7 @@ def main() -> int:
     parser.add_argument("--branch", default="main")
     parser.add_argument("--create-public", action="store_true")
     parser.add_argument("--confirm-publish", action="store_true", help="确认执行外部写入")
+    parser.add_argument("--skip-pages", action="store_true", help="仅推送内容，跳过 Pages API 配置")
     parser.add_argument("--keep-workdir", action="store_true", help="失败时保留临时克隆")
     args = parser.parse_args()
 
@@ -161,13 +162,14 @@ def main() -> int:
         elif diff.returncode != 0:
             raise RuntimeError("无法检查 Git 暂存区状态")
 
-        pages_url = configure_pages(args.repo, args.branch)
+        pages_url = "" if args.skip_pages else configure_pages(args.repo, args.branch)
         episode_url = f"{pages_url.rstrip('/')}/{item['url']}" if pages_url else ""
         print(json.dumps({
             "repo": args.repo,
             "created": created,
             "branch": args.branch,
             "published_path": str(target.relative_to(workdir)),
+            "pages_configured": not args.skip_pages,
             "pages_url": pages_url,
             "episode_url": episode_url,
         }, ensure_ascii=False, indent=2))
