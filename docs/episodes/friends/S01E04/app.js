@@ -1,13 +1,39 @@
 const FSRS_URL = "https://esm.sh/ts-fsrs@6.0.0";
 const DAY_MS = 86_400_000;
+const MODE_KEY = "ankienglish:study-mode";
+const VOICE_KEY = "ankienglish:voice-uri";
+const LISTENING_LABELS = {
+  heard_no_meaning: "听懂了，但不知道意思",
+  heard_and_understood: "听懂了，而且知道意思",
+  not_understood: "没听懂",
+};
 
 const elements = Object.fromEntries([
   "deck-title", "eyebrow", "due-count", "learned-count", "scheduler-badge",
-  "review-panel", "empty-panel", "level", "category", "review-status", "term",
-  "ipa", "scene-sentence", "reveal-button", "answer", "definition",
-  "scene-translation", "everyday-example", "everyday-translation", "notes",
-  "source-name", "source-link", "notify-button", "export-button", "import-input",
+  "review-panel", "empty-panel", "card-content", "card-meta", "level", "category",
+  "review-status", "term", "ipa", "scene-sentence", "reveal-button", "answer",
+  "definition", "scene-translation", "everyday-example", "everyday-translation",
+  "notes", "source-name", "source-link", "notify-button", "export-button",
+  "import-input", "mode-toggle", "listening-prompt", "tts-status", "audio-orb",
+  "replay-button", "slow-replay-button", "voice-select", "text-panel", "text-step",
+  "answer-step", "listening-result", "text-ratings", "listening-complete",
 ].map((id) => [id, document.getElementById(id)]));
+
+function readPreference(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writePreference(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn("无法保存网页偏好", error);
+  }
+}
 
 let deck;
 let deckId;
@@ -18,6 +44,11 @@ let currentCard = null;
 let scheduler = null;
 let Rating = null;
 let schedulerName = "基础间隔（FSRS 加载失败）";
+let studyMode = readPreference(MODE_KEY) === "listening" ? "listening" : "text";
+let englishVoices = [];
+let pendingListeningGrade = null;
+let pendingListeningAnswer = null;
+const ttsSupported = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
 
 function localDateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -130,10 +161,129 @@ function setText(id, value) {
   elements[id].textContent = value || "";
 }
 
-function renderCurrent() {
-  currentCard = queue[0] || null;
-  elements["answer"].hidden = true;
+function voiceScore(voice) {
+  let score = voice.localService ? 100 : 0;
+  if (/premium|enhanced|natural|neural/i.test(voice.name)) score += 80;
+  if (/samantha|ava|zoe|daniel|karen|moira|jenny|aria|serena|google us english/i.test(voice.name)) score += 60;
+  if (/^en-US/i.test(voice.lang)) score += 20;
+  else if (/^en-GB/i.test(voice.lang)) score += 15;
+  if (voice.default) score += 5;
+  return score;
+}
+
+function loadVoices() {
+  if (!ttsSupported) return;
+  const selectedUri = readPreference(VOICE_KEY);
+  englishVoices = window.speechSynthesis.getVoices()
+    .filter((voice) => /^en[-_]/i.test(voice.lang))
+    .sort((a, b) => voiceScore(b) - voiceScore(a) || a.name.localeCompare(b.name));
+
+  elements["voice-select"].replaceChildren();
+  if (!englishVoices.length) {
+    const option = new Option("浏览器默认英文声音", "");
+    elements["voice-select"].add(option);
+    return;
+  }
+  for (const voice of englishVoices) {
+    const locality = voice.localService ? "本地" : "浏览器";
+    const option = new Option(`${voice.name} · ${voice.lang} · ${locality}`, voice.voiceURI);
+    elements["voice-select"].add(option);
+  }
+  const selected = englishVoices.find((voice) => voice.voiceURI === selectedUri) || englishVoices[0];
+  elements["voice-select"].value = selected.voiceURI;
+}
+
+function selectedVoice() {
+  return englishVoices.find((voice) => voice.voiceURI === elements["voice-select"].value) || englishVoices[0] || null;
+}
+
+function cancelSpeech() {
+  if (!ttsSupported) return;
+  window.speechSynthesis.cancel();
+  elements["audio-orb"].classList.remove("speaking");
+}
+
+function speakCurrent(rate = 0.95) {
+  if (!currentCard || studyMode !== "listening") return;
+  if (!ttsSupported) {
+    setText("tts-status", "当前浏览器不支持语音合成，请切换到文字模式");
+    return;
+  }
+
+  cancelSpeech();
+  const utterance = new SpeechSynthesisUtterance(currentCard.scene_sentence);
+  const voice = selectedVoice();
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
+  } else {
+    utterance.lang = "en-US";
+  }
+  utterance.rate = rate;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  utterance.onstart = () => {
+    setText("tts-status", rate < 0.9 ? "正在慢速播放…" : "正在播放…");
+    elements["audio-orb"].classList.add("speaking");
+  };
+  utterance.onend = () => {
+    setText("tts-status", "播放结束，可以重听或选择理解程度");
+    elements["audio-orb"].classList.remove("speaking");
+  };
+  utterance.onerror = (event) => {
+    if (event.error === "canceled" || event.error === "interrupted") return;
+    setText("tts-status", "自动播放被浏览器阻止，请点“再听一遍”");
+    elements["audio-orb"].classList.remove("speaking");
+  };
+  window.speechSynthesis.speak(utterance);
+}
+
+function updateModeControl() {
+  const listening = studyMode === "listening";
+  elements["mode-toggle"].textContent = listening ? "切换到文字模式" : "开启听力模式";
+  elements["mode-toggle"].setAttribute("aria-pressed", String(listening));
+  elements["mode-toggle"].classList.toggle("active", listening);
+  if (!ttsSupported) {
+    elements["mode-toggle"].disabled = true;
+    elements["mode-toggle"].textContent = "浏览器不支持听力模式";
+  }
+}
+
+function showTextStage(answer, grade) {
+  pendingListeningAnswer = answer;
+  pendingListeningGrade = grade;
+  cancelSpeech();
+  elements["listening-prompt"].hidden = true;
+  elements["card-content"].hidden = false;
+  elements["card-meta"].hidden = false;
+  elements["text-panel"].hidden = false;
+  elements["text-step"].hidden = false;
+  elements["listening-result"].hidden = false;
+  setText("listening-result", `你的判断：${LISTENING_LABELS[answer]}`);
   elements["reveal-button"].hidden = false;
+  elements["answer"].hidden = true;
+}
+
+function revealAnswer() {
+  elements["answer"].hidden = false;
+  elements["reveal-button"].hidden = true;
+  const listening = studyMode === "listening";
+  elements["answer-step"].hidden = !listening;
+  elements["text-ratings"].hidden = listening;
+  elements["listening-complete"].hidden = !listening;
+}
+
+function renderCurrent({ autoSpeak = false } = {}) {
+  cancelSpeech();
+  currentCard = queue[0] || null;
+  pendingListeningGrade = null;
+  pendingListeningAnswer = null;
+  elements["answer"].hidden = true;
+  elements["listening-result"].hidden = true;
+  elements["text-step"].hidden = true;
+  elements["answer-step"].hidden = true;
+  elements["text-ratings"].hidden = false;
+  elements["listening-complete"].hidden = true;
   if (!currentCard) {
     elements["review-panel"].hidden = true;
     elements["empty-panel"].hidden = false;
@@ -155,10 +305,21 @@ function renderCurrent() {
   setText("everyday-example", currentCard.everyday_example);
   setText("everyday-translation", currentCard.everyday_translation_zh);
   setText("notes", currentCard.notes);
+
+  const listening = studyMode === "listening" && ttsSupported;
+  elements["listening-prompt"].hidden = !listening;
+  elements["card-content"].hidden = listening;
+  elements["card-meta"].hidden = listening;
+  elements["text-panel"].hidden = listening;
+  elements["reveal-button"].hidden = listening;
+  if (listening) {
+    setText("tts-status", "准备播放");
+    if (autoSpeak) speakCurrent();
+  }
   updateStats();
 }
 
-async function review(grade) {
+async function review(grade, listeningAnswer = null) {
   if (!currentCard) return;
   const cardProgress = ensureCardProgress(currentCard);
   const now = new Date();
@@ -171,10 +332,16 @@ async function review(grade) {
     const previous = Number(cardProgress.events.at(-1)?.intervalDays || 0);
     intervalDays = fallbackNextInterval(grade, previous);
   }
-  cardProgress.events.push({ grade, at: now.toISOString(), intervalDays });
+  cardProgress.events.push({
+    grade,
+    at: now.toISOString(),
+    intervalDays,
+    mode: listeningAnswer ? "listening" : "text",
+    ...(listeningAnswer ? { listeningAnswer } : {}),
+  });
   saveProgress();
   await buildQueue();
-  renderCurrent();
+  renderCurrent({ autoSpeak: studyMode === "listening" });
 }
 
 function configureSource() {
@@ -207,7 +374,7 @@ async function importProgress(file) {
   progress = incoming;
   saveProgress();
   await buildQueue();
-  renderCurrent();
+  renderCurrent({ autoSpeak: studyMode === "listening" });
 }
 
 async function enableNotifications() {
@@ -233,13 +400,33 @@ async function init() {
   setText("eyebrow", `${deck.cards.length} 个词条 · 每日最多 ${deck.settings.daily_new_limit} 张新卡`);
   document.title = `${deck.metadata.show} ${deck.metadata.episode_code} · AnkiEnglish`;
   configureSource();
+  updateModeControl();
+  if (ttsSupported) {
+    loadVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+  }
   await initScheduler();
   await buildQueue();
-  renderCurrent();
+  renderCurrent({ autoSpeak: studyMode === "listening" });
 
-  elements["reveal-button"].addEventListener("click", () => {
-    elements["answer"].hidden = false;
-    elements["reveal-button"].hidden = true;
+  elements["mode-toggle"].addEventListener("click", () => {
+    studyMode = studyMode === "listening" ? "text" : "listening";
+    writePreference(MODE_KEY, studyMode);
+    updateModeControl();
+    renderCurrent({ autoSpeak: studyMode === "listening" });
+  });
+  elements["voice-select"].addEventListener("change", () => {
+    writePreference(VOICE_KEY, elements["voice-select"].value);
+    speakCurrent();
+  });
+  elements["replay-button"].addEventListener("click", () => speakCurrent());
+  elements["slow-replay-button"].addEventListener("click", () => speakCurrent(0.75));
+  document.querySelectorAll("[data-listening-grade]").forEach((button) => {
+    button.addEventListener("click", () => showTextStage(button.dataset.listeningAnswer, button.dataset.listeningGrade));
+  });
+  elements["reveal-button"].addEventListener("click", revealAnswer);
+  elements["listening-complete"].addEventListener("click", () => {
+    if (pendingListeningGrade && pendingListeningAnswer) review(pendingListeningGrade, pendingListeningAnswer);
   });
   document.querySelectorAll("[data-grade]").forEach((button) => {
     button.addEventListener("click", () => review(button.dataset.grade));
@@ -255,6 +442,7 @@ async function init() {
       event.target.value = "";
     }
   });
+  window.addEventListener("pagehide", cancelSpeech);
 }
 
 init().catch((error) => {

@@ -11,6 +11,7 @@
   <header class="topbar">
     <a class="brand" href="../../../">AnkiEnglish</a>
     <div class="toolbar">
+      <button id="mode-toggle" class="mode-toggle" type="button" aria-pressed="false">开启听力模式</button>
       <a class="ghost" href="downloads/anki.csv" download>下载 Anki CSV</a>
       <a class="ghost" href="downloads/cards.csv" download>下载完整 CSV</a>
       <button id="notify-button" class="ghost" type="button">到期通知</button>
@@ -32,31 +33,65 @@
 
     <section id="review-panel" class="review-panel" hidden>
       <article class="review-card">
-        <div class="card-meta">
-          <span id="level" class="badge"></span>
-          <span id="category"></span>
-          <span id="review-status"></span>
-        </div>
-        <h2 id="term"></h2>
-        <p id="ipa" class="ipa"></p>
-        <blockquote id="scene-sentence"></blockquote>
-
-        <button id="reveal-button" class="primary reveal" type="button">显示答案</button>
-
-        <div id="answer" class="answer" hidden>
-          <p id="definition" class="definition"></p>
-          <p id="scene-translation" class="translation"></p>
-          <div class="example-box">
-            <span>日常替换例句</span>
-            <p id="everyday-example"></p>
-            <p id="everyday-translation" class="translation"></p>
+        <section id="listening-prompt" class="listening-prompt" hidden aria-labelledby="listening-title">
+          <div id="audio-orb" class="audio-orb" aria-hidden="true"><span>▶</span></div>
+          <p class="step-label">第 1 步 · 只听，不看文字</p>
+          <h2 id="listening-title">你听懂了吗？</h2>
+          <p id="tts-status" class="tts-status" aria-live="polite">准备播放</p>
+          <div class="audio-controls">
+            <button id="replay-button" class="primary" type="button">再听一遍</button>
+            <button id="slow-replay-button" class="ghost" type="button">慢速播放</button>
           </div>
-          <p id="notes" class="notes"></p>
-          <div class="ratings" aria-label="记忆评分">
-            <button type="button" data-grade="Again" class="again">忘记</button>
-            <button type="button" data-grade="Hard" class="hard">困难</button>
-            <button type="button" data-grade="Good" class="good">记得</button>
-            <button type="button" data-grade="Easy" class="easy">简单</button>
+          <label class="voice-picker" for="voice-select">
+            英文声音
+            <select id="voice-select" aria-label="选择英文 TTS 声音"></select>
+          </label>
+          <div class="listening-choices" aria-label="听力理解程度">
+            <button type="button" data-listening-grade="Hard" data-listening-answer="heard_no_meaning">
+              <strong>A</strong><span>听懂了，但不知道意思</span>
+            </button>
+            <button type="button" data-listening-grade="Good" data-listening-answer="heard_and_understood">
+              <strong>B</strong><span>听懂了，而且知道意思</span>
+            </button>
+            <button type="button" data-listening-grade="Again" data-listening-answer="not_understood">
+              <strong>C</strong><span>没听懂</span>
+            </button>
+          </div>
+        </section>
+
+        <div id="card-content">
+          <div id="card-meta" class="card-meta">
+            <span id="level" class="badge"></span>
+            <span id="category"></span>
+            <span id="review-status"></span>
+          </div>
+          <section id="text-panel" class="text-panel" aria-labelledby="term">
+            <p id="listening-result" class="listening-result" hidden></p>
+            <p id="text-step" class="step-label" hidden>第 2 步 · 对照文字</p>
+            <h2 id="term"></h2>
+            <p id="ipa" class="ipa"></p>
+            <blockquote id="scene-sentence"></blockquote>
+          </section>
+
+          <button id="reveal-button" class="primary reveal" type="button">显示解释</button>
+
+          <div id="answer" class="answer" hidden>
+            <p id="answer-step" class="step-label" hidden>第 3 步 · 理解释义</p>
+            <p id="definition" class="definition"></p>
+            <p id="scene-translation" class="translation"></p>
+            <div class="example-box">
+              <span>日常替换例句</span>
+              <p id="everyday-example"></p>
+              <p id="everyday-translation" class="translation"></p>
+            </div>
+            <p id="notes" class="notes"></p>
+            <div id="text-ratings" class="ratings" aria-label="记忆评分">
+              <button type="button" data-grade="Again" class="again">忘记</button>
+              <button type="button" data-grade="Hard" class="hard">困难</button>
+              <button type="button" data-grade="Good" class="good">记得</button>
+              <button type="button" data-grade="Easy" class="easy">简单</button>
+            </div>
+            <button id="listening-complete" class="primary reveal" type="button" hidden>完成本卡并继续</button>
           </div>
         </div>
       </article>
